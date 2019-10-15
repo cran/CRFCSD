@@ -520,6 +520,59 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// likelihoodfunc1
+double likelihoodfunc1(const double& b, const arma::vec& parameters, const arma::vec& Delta, const arma::mat& X, const arma::vec& Z, const int& ni, const double& r, const arma::mat& blC, const int& betadim, const int& gammadim);
+RcppExport SEXP _CRFCSD_likelihoodfunc1(SEXP bSEXP, SEXP parametersSEXP, SEXP DeltaSEXP, SEXP XSEXP, SEXP ZSEXP, SEXP niSEXP, SEXP rSEXP, SEXP blCSEXP, SEXP betadimSEXP, SEXP gammadimSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type parameters(parametersSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type Delta(DeltaSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< const int& >::type ni(niSEXP);
+    Rcpp::traits::input_parameter< const double& >::type r(rSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type blC(blCSEXP);
+    Rcpp::traits::input_parameter< const int& >::type betadim(betadimSEXP);
+    Rcpp::traits::input_parameter< const int& >::type gammadim(gammadimSEXP);
+    rcpp_result_gen = Rcpp::wrap(likelihoodfunc1(b, parameters, Delta, X, Z, ni, r, blC, betadim, gammadim));
+    return rcpp_result_gen;
+END_RCPP
+}
+// testquadrature1
+double testquadrature1(const arma::vec& parameters, const arma::mat& rules, const arma::field<arma::vec>& Delta, const arma::field<arma::vec>& X, const arma::mat& Z, const int& n, const arma::vec& ni, const double& r, const arma::field<arma::mat>& blC, const int& betadim, const int& gammadim, const arma::vec& weight);
+RcppExport SEXP _CRFCSD_testquadrature1(SEXP parametersSEXP, SEXP rulesSEXP, SEXP DeltaSEXP, SEXP XSEXP, SEXP ZSEXP, SEXP nSEXP, SEXP niSEXP, SEXP rSEXP, SEXP blCSEXP, SEXP betadimSEXP, SEXP gammadimSEXP, SEXP weightSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type parameters(parametersSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type rules(rulesSEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec>& >::type Delta(DeltaSEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::vec>& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< const int& >::type n(nSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type ni(niSEXP);
+    Rcpp::traits::input_parameter< const double& >::type r(rSEXP);
+    Rcpp::traits::input_parameter< const arma::field<arma::mat>& >::type blC(blCSEXP);
+    Rcpp::traits::input_parameter< const int& >::type betadim(betadimSEXP);
+    Rcpp::traits::input_parameter< const int& >::type gammadim(gammadimSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type weight(weightSEXP);
+    rcpp_result_gen = Rcpp::wrap(testquadrature1(parameters, rules, Delta, X, Z, n, ni, r, blC, betadim, gammadim, weight));
+    return rcpp_result_gen;
+END_RCPP
+}
+// Maxeigen
+arma::field<arma::mat> Maxeigen(const arma::mat& B);
+RcppExport SEXP _CRFCSD_Maxeigen(SEXP BSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type B(BSEXP);
+    rcpp_result_gen = Rcpp::wrap(Maxeigen(B));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_CRFCSD_firstderiv_i", (DL_FUNC) &_CRFCSD_firstderiv_i, 10},
@@ -544,6 +597,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CRFCSD_likelihoodfunccure", (DL_FUNC) &_CRFCSD_likelihoodfunccure, 10},
     {"_CRFCSD_Loglikelihoodcure", (DL_FUNC) &_CRFCSD_Loglikelihoodcure, 14},
     {"_CRFCSD_loglikelihoodtestcure", (DL_FUNC) &_CRFCSD_loglikelihoodtestcure, 10},
+    {"_CRFCSD_likelihoodfunc1", (DL_FUNC) &_CRFCSD_likelihoodfunc1, 10},
+    {"_CRFCSD_testquadrature1", (DL_FUNC) &_CRFCSD_testquadrature1, 12},
+    {"_CRFCSD_Maxeigen", (DL_FUNC) &_CRFCSD_Maxeigen, 1},
     {NULL, NULL, 0}
 };
 

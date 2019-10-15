@@ -225,6 +225,9 @@ double Q1(const arma::vec&parameters,const arma::mat&rules,const arma::vec&beta,
   return -result;
 }
 
+
+
+
 // [[Rcpp::export]]
 double Q2(const arma::vec&parameters,const arma::mat&rules,const arma::vec&beta,const arma::vec&gamma,const arma::vec&eta,const double&theta,
           const arma::field<arma::vec>&Delta,const int&betadim,const int&gammadim,
@@ -858,3 +861,95 @@ double loglikelihoodtestcure(const arma::vec&parameters,const double&b,
   
   return result;
 }
+
+
+
+// [[Rcpp::export]]
+double likelihoodfunc1(const double&b,const arma::vec&parameters,
+                       const arma::vec&Delta,const arma::mat&X,const arma::vec&Z,
+                       const int&ni,const double&r,const arma::mat&blC,const int&betadim,const int&gammadim){
+  int totaldim=parameters.n_elem;
+  int zetadim=betadim+gammadim+1;
+  double result=0;double S,lambda;arma::mat midresult;midresult.zeros(1,1);
+  double tracprobability=0;
+  arma::vec covariate(betadim+gammadim);
+  
+  
+  double uncurerate;
+  for(int j=0;j<ni;j++){
+    covariate.subvec(0,betadim-1)=trans(X.row(j));
+    covariate.subvec(betadim,betadim+gammadim-1)=Z;
+    
+    uncurerate=1/(1+std::exp(-parameters(0)-sum(parameters.subvec(1,zetadim-1)%covariate)));
+    
+    if(r>0){
+      S=pow(1+r*sum(trans(exp(parameters.subvec(zetadim+betadim+gammadim+1,totaldim-1)))*blC.col(j))
+              *std::exp(sum(parameters.subvec(zetadim,zetadim+betadim+gammadim-1)%covariate)+std::exp(parameters(zetadim+betadim+gammadim))*b),-1/r);
+    }
+    else{
+      S=std::exp(-sum(trans(exp(parameters.subvec(zetadim+betadim+gammadim+1,totaldim-1)))*blC.col(j))
+                   *std::exp(sum(parameters.subvec(zetadim,zetadim+betadim+gammadim-1)%covariate)+std::exp(parameters(zetadim+betadim+gammadim))*b));
+    }
+    if(S>0.99999999999){
+      S=0.99999999999;
+    }
+    if(uncurerate<std::pow(10,-30)){
+      uncurerate=std::pow(10,-30);
+    }
+    double secondterm=uncurerate+(1-uncurerate)*S;
+    if((uncurerate+(1-uncurerate)*S)<std::pow(10,-30)){
+      
+      secondterm=std::pow(10,-30);
+    }
+    result=result+Delta(j)*(log(1-S)+log(1-uncurerate))+(1-Delta(j))*std::log(secondterm);
+  }
+  
+  
+  result=result+R::dnorm(b,0,1,true);
+  result=std::exp(result);
+  result=result*std::exp(b*b);
+  return result;
+}
+
+
+// [[Rcpp::export]]
+double testquadrature1(const arma::vec&parameters,const arma::mat&rules,const arma::field<arma::vec>&Delta,
+                       const arma::field<arma::vec>&X,const arma::mat&Z,const int&n,const arma::vec&ni,
+                       const double&r,const arma::field<arma::mat>&blC,const int&betadim,const int&gammadim,
+                       const arma::vec&weight){
+  int zetadim=betadim+gammadim+1;
+  int totaldim=parameters.n_elem;
+  int order=rules.n_rows;double result=0;
+  arma::vec weightvec;weightvec=rules.col(1);double term1;
+  arma::vec functionvalue(order);
+  for(int i=0;i<n;i++){
+    
+    for(int k=0;k<order;k++){
+      functionvalue(k)=likelihoodfunc1(rules(k,0),parameters,
+                    Delta(i),X(i),trans(Z.row(i)),ni(i),r,blC(i),betadim,gammadim);
+    }
+    
+    term1=sum(functionvalue%weightvec);
+    if(term1<std::pow(10,-30)){
+      term1=std::pow(10,-30);}
+    result=result+weight(i)*std::log(term1);
+    
+  }
+  arma::vec parametersquare=pow(parameters.subvec(0,betadim+gammadim+zetadim),2);
+  result=result-sum(log(1+parametersquare/6.25));
+  return -result;
+}
+
+
+
+// [[Rcpp::export]]
+arma::field<arma::mat> Maxeigen(const arma::mat&B){
+  arma::vec eigval;
+  arma::mat eigvec;
+  arma::field<arma::mat> result(2);
+  arma::eig_sym(eigval,eigvec,B);
+  result(0)=eigval;
+  result(1)=eigvec;
+  return result;
+}
+

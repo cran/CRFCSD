@@ -31,7 +31,7 @@
   ip=orthopolynom::hermite.h.inner.products(n)
   return(.quadrature.rules(r,ip))
 }
-.EMiter=function(lastpar,X,Z,Delta,n,ni,blC,r,myrules,lambda,R,Cauchy.pen){
+.EMiter=function(lastpar,X,Z,Delta,n,ni,blC,r,myrules,lambda,R,Cauchy.pen,clustering){
   betadim=dim(X[[1]])[2]
   gammadim=dim(Z)[2]
   zeta=lastpar[1:(1+betadim+gammadim)]
@@ -40,9 +40,18 @@
   gamma=betagamma[(betadim+1):(betadim+gammadim)]
   theta=betagamma[betadim+gammadim+1]
   psi=betagamma[(2+betadim+gammadim):length(betagamma)]
+  if(clustering){
   normalC=NormalConstant(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
-  uijqmat=uijq(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
+  
   g0bvalue=g0bmat(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
+  }
+  else{
+    myrule[,1]=rep(0,dim(myrules)[1])
+    myrule[,2]=rep(1,dim(myrules)[1])
+    normalC=rep(dim(myrules)[1],n)
+    g0bvalue=matrix(1, nrow = dim(myrules)[1], ncol = n)
+  }
+  uijqmat=uijq(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
   zeta=optim(par = zeta,fn=Q1,rules=myrules,beta=beta,gamma=gamma,eta=zeta,
              theta=theta,Delta=Delta,betadim=betadim,gammadim=gammadim,n=n,ni=ni,X=X,Z=Z,psi=psi,blC=blC,r=r,g0bvalue=g0bvalue,
              normalconstant=normalC,uijqmat=uijqmat,Cauchyindex=Cauchy.pen,method = "BFGS")$par
@@ -52,7 +61,7 @@
   result=c(zeta,betagamma)
   return(result)
 }
-.EMest=function(X,Z,Delta,n,ni,C,r,quadnum,lambda,criterion,blC,myrules,Cauchy.pen){
+.EMest=function(X,Z,Delta,n,ni,C,r,quadnum,lambda,criterion,blC,myrules,Cauchy.pen,clustering){
   
   coefnum=dim(blC[[1]])[1]
   D=matrix(0, nrow = coefnum-2, ncol = coefnum)
@@ -65,14 +74,14 @@
   lastpar=rep(0,2+2*(betadim+gammadim)+coefnum)
   difference=1
   while (difference>criterion) {
-    outputpar=.EMiter(lastpar,X,Z,Delta,n,ni,blC,r,myrules,lambda,R,Cauchy.pen)
+    outputpar=.EMiter(lastpar,X,Z,Delta,n,ni,blC,r,myrules,lambda,R,Cauchy.pen,clustering)
     difference=sum(abs((-outputpar+lastpar)/(lastpar)))
     lastpar=outputpar
   }
   
   return(outputpar)
 }
-.AICcomputepenpara=function(parest,X,Z,Delta,blC,r,n,ni,myrules,lambda,Cauchy.pen){
+.AICcomputepenpara=function(parest,X,Z,Delta,blC,r,n,ni,myrules,lambda,Cauchy.pen,clustering){
   coefnum=dim(blC[[1]])[1]
   D=matrix(0, nrow = coefnum-2, ncol = coefnum)
   for(i in 1:(coefnum-2)){
@@ -89,8 +98,16 @@
   gamma=betagamma[(betadim+1):(betadim+gammadim)]
   theta=betagamma[betadim+gammadim+1]
   psi=betagamma[(2+betadim+gammadim):length(betagamma)]
+  if(clustering){
   g0bvalue=g0bmat(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
   normalC=NormalConstant(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
+  }
+  else{
+    myrule[,1]=rep(0,dim(myrules)[1])
+    myrule[,2]=rep(1,dim(myrules)[1])
+    normalC=rep(dim(myrules)[1],n)
+    g0bvalue=matrix(1, nrow = dim(myrules)[1], ncol = n)
+  }
   quadnum=dim(myrules)[1]
   for (i in 1:n) {
     resulti=matrix(0, nrow = pardim, ncol = pardim)
@@ -129,13 +146,13 @@
       log.likeli=Loglikelihood(parest,myrules,Delta,X,Z,n,ni,r,blC,betadim,gammadim,lambda,R,Cauchy.pen)
       AIC=df-log.likeli
       Informationmatrix=result+Rbig
-      var=diag(solve(Informationmatrix,tol=1e-25))[1:(2*(betadim+gammadim+1))]}
+      var=diag(solve(Informationmatrix,tol=1e-300))[1:(2*(betadim+gammadim+1))]}
     else{
       df=length(parest)
       log.likeli=Loglikelihood(parest,myrules,Delta,X,Z,n,ni,r,blC,betadim,gammadim,lambda,R,Cauchy.pen)
       AIC=df-log.likeli
       Informationmatrix=result
-      var=diag(solve(Informationmatrix,tol=1e-25))[1:(2*(betadim+gammadim+1))]
+      var=diag(solve(Informationmatrix,tol=1e-300))[1:(2*(betadim+gammadim+1))]
     }
   }
   else{
@@ -147,14 +164,14 @@
       log.likeli=Loglikelihood(parest,myrules,Delta,X,Z,n,ni,r,blC,betadim,gammadim,lambda,R)
       AIC=df-log.likeli
       Informationmatrix=result+Rbig
-      var=diag(solve(Informationmatrix,tol=1e-25))[1:(2*(betadim+gammadim+1))]
+      var=diag(solve(Informationmatrix,tol=1e-300))[1:(2*(betadim+gammadim+1))]
     }
     else{
       df=length(parest)
       log.likeli=Loglikelihood(parest,myrules,Delta,X,Z,n,ni,r,blC,betadim,gammadim,lambda,R,Cauchy.pen)
       AIC=df-log.likeli
       Informationmatrix=result
-      var=diag(solve(Informationmatrix,tol=1e-25))[1:(2*(betadim+gammadim+1))]
+      var=diag(solve(Informationmatrix,tol=1e-300))[1:(2*(betadim+gammadim+1))]
     }
   }
   finalresult=list()
@@ -164,7 +181,7 @@
   finalresult[[3]]=AIC
   return(finalresult)
 }
-.EMitercure=function(lastpar,X,Z,Delta,n,ni,blC,r,myrules,lambda,R,Cauchy.pen){
+.EMitercure=function(lastpar,X,Z,Delta,n,ni,blC,r,myrules,lambda,R,Cauchy.pen,clustering){
   betadim=dim(X[[1]])[2]
   gammadim=dim(Z)[2]
   zeta=lastpar[1]
@@ -173,9 +190,18 @@
   gamma=betagamma[(betadim+1):(betadim+gammadim)]
   theta=betagamma[betadim+gammadim+1]
   psi=betagamma[(2+betadim+gammadim):length(betagamma)]
+  if(clustering){
   normalC=NormalConstantcure(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
-  uijqmat=uijqcure(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
   g0bvalue=g0bmatcure(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
+  }
+  else{
+    myrule[,1]=rep(0,dim(myrules)[1])
+    myrule[,2]=rep(1,dim(myrules)[1])
+    normalC=rep(dim(myrules)[1],n)
+    g0bvalue=matrix(1, nrow = dim(myrules)[1], ncol = n)
+  }
+  uijqmat=uijqcure(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
+  
   zeta=optim(par = zeta,fn=Q1cure,rules=myrules,beta=beta,gamma=gamma,eta=zeta,
              theta=theta,Delta=Delta,betadim=betadim,gammadim=gammadim,n=n,ni=ni,X=X,Z=Z,psi=psi,blC=blC,r=r,g0bvalue=g0bvalue,
              normalconstant=normalC,uijqmat=uijqmat,Cauchyindex=Cauchy.pen,method = "BFGS")$par
@@ -185,7 +211,7 @@
   result=c(zeta,betagamma)
   return(result)
 }
-.EMestcure=function(X,Z,Delta,n,ni,C,r,quadnum,lambda,criterion,blC,myrules,Cauchy.pen){
+.EMestcure=function(X,Z,Delta,n,ni,C,r,quadnum,lambda,criterion,blC,myrules,Cauchy.pen,clustering){
   
   coefnum=dim(blC[[1]])[1]
   D=matrix(0, nrow = coefnum-2, ncol = coefnum)
@@ -198,14 +224,14 @@
   lastpar=rep(0.1,2+(betadim+gammadim)+coefnum)
   difference=1
   while (difference>criterion) {
-    outputpar=.EMitercure(lastpar,X,Z,Delta,n,ni,blC,r,myrules,lambda,R,Cauchy.pen)
+    outputpar=.EMitercure(lastpar,X,Z,Delta,n,ni,blC,r,myrules,lambda,R,Cauchy.pen,clustering)
     difference=sum(abs((-outputpar+lastpar)/(lastpar)))
     lastpar=outputpar
   }
   
   return(outputpar)
 }
-.AICcomputepenparacure=function(parest,X,Z,Delta,blC,r,n,ni,myrules,lambda,Cauchy.pen){
+.AICcomputepenparacure=function(parest,X,Z,Delta,blC,r,n,ni,myrules,lambda,Cauchy.pen,clustering){
   coefnum=dim(blC[[1]])[1]
   D=matrix(0, nrow = coefnum-2, ncol = coefnum)
   for(i in 1:(coefnum-2)){
@@ -222,8 +248,16 @@
   gamma=betagamma[(betadim+1):(betadim+gammadim)]
   theta=betagamma[betadim+gammadim+1]
   psi=betagamma[(2+betadim+gammadim):length(betagamma)]
+  if(clustering){
   g0bvalue=g0bmatcure(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
   normalC=NormalConstantcure(myrules,beta,gamma,zeta,theta,Delta,betadim,gammadim,n,ni,X,Z,psi,blC,r)
+  }
+  else{
+    myrule[,1]=rep(0,dim(myrules)[1])
+    myrule[,2]=rep(1,dim(myrules)[1])
+    normalC=rep(dim(myrules)[1],n)
+    g0bvalue=matrix(1, nrow = dim(myrules)[1], ncol = n)
+  }
   quadnum=dim(myrules)[1]
   for (i in 1:n) {
     resulti=matrix(0, nrow = pardim, ncol = pardim)
@@ -262,13 +296,13 @@
       log.likeli=Loglikelihoodcure(parest,myrules,Delta,X,Z,n,ni,r,blC,betadim,gammadim,lambda,R,Cauchy.pen)
       AIC=df-log.likeli
       Informationmatrix=result+Rbig
-      var=diag(solve(Informationmatrix,tol=1e-25))[1:(betadim+gammadim+2)]}
+      var=diag(solve(Informationmatrix,tol=1e-300))[1:(betadim+gammadim+2)]}
     else{
       df=length(parest)
       log.likeli=Loglikelihoodcure(parest,myrules,Delta,X,Z,n,ni,r,blC,betadim,gammadim,lambda,R,Cauchy.pen)
       AIC=df-log.likeli
       Informationmatrix=result
-      var=diag(solve(Informationmatrix,tol=1e-25))[1:(betadim+gammadim+2)]
+      var=diag(solve(Informationmatrix,tol=1e-300))[1:(betadim+gammadim+2)]
     }
   }
   else{
@@ -280,14 +314,14 @@
       log.likeli=Loglikelihoodcure(parest,myrules,Delta,X,Z,n,ni,r,blC,betadim,gammadim,lambda,R)
       AIC=df-log.likeli
       Informationmatrix=result+Rsecderiv
-      var=diag(solve(Informationmatrix,tol=1e-25))[1:(betadim+gammadim+2)]
+      var=diag(solve(Informationmatrix,tol=1e-300))[1:(betadim+gammadim+2)]
     }
     else{
       df=length(parest)
       log.likeli=Loglikelihoodcure(parest,myrules,Delta,X,Z,n,ni,r,blC,betadim,gammadim,lambda,R,Cauchy.pen)
       AIC=df-log.likeli
       Informationmatrix=result
-      var=diag(solve(Informationmatrix,tol=1e-25))[1:(betadim+gammadim+2)]
+      var=diag(solve(Informationmatrix,tol=1e-300))[1:(betadim+gammadim+2)]
     }
   }
   finalresult=list()
@@ -394,8 +428,26 @@
   }
   return(result)
 }
+
+.firstdriv_xi=function(omega,parest,rules,Delta,X,Z,n,ni,r,blC,betadim,gammadim){
+  result=numDeriv::grad(testquadrature1,x=parest,rules=rules,Delta=Delta,X=X,Z=Z,n=n,
+                        ni=ni,r=r,blC=blC,betadim=betadim,gammadim=gammadim,weight=omega)
+  return(result)
+}
+
+.jacob_weight=function(omega,parest,rules,Delta,X,Z,n,ni,r,blC,betadim,gammadim){
+  result=numDeriv::jacobian(.firstdriv_xi,x=omega,parest=parest,rules=rules,Delta=Delta,X=X,Z=Z,n=n,
+                            ni=ni,r=r,blC=blC,betadim=betadim,gammadim=gammadim)
+  return(result)
+}
+
+
+
+
+
+
 CSDfit=function(Rawdata,n_subject.raw,n_within.raw,r,n_quad=30,lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,
-                knots.num=2,degree=2,scale.numr=TRUE,cure.reg=TRUE){
+                knots.num=2,degree=2,scale.numr=TRUE,cure.reg=TRUE,clustering=TRUE){
   myrules=.ghrules(n_quad,normalized=FALSE)
   myrules=as.matrix(myrules[[n_quad]])
   if(scale.numr==TRUE){
@@ -426,9 +478,10 @@ CSDfit=function(Rawdata,n_subject.raw,n_within.raw,r,n_quad=30,lambda=0,Cauchy.p
     blC[[i]]=t(splines2::ibs((C[[i]]-(minCSTime-0.1))/(maxCSTime-minCSTime+0.2),knots = knots,degree=degree
                              ,Boundary.knots = c(0,1),intercept = TRUE))
   }
+  
   if(cure.reg){
-    par.est=.EMest(X,Z,Delta,n,ni,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen)
-    loglikeli.var.AIC=.AICcomputepenpara(par.est,X,Z,Delta,blC,r,n,ni,myrules,lambda,Cauchy.pen)
+    par.est=.EMest(X,Z,Delta,n,ni,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen,clustering)
+    loglikeli.var.AIC=.AICcomputepenpara(par.est,X,Z,Delta,blC,r,n,ni,myrules,lambda,Cauchy.pen,clustering)
     reg.est=par.est[1:(2*n_subject.cov+2*n_tooth.cov+2)]
     reg.est[length(reg.est)]=exp(reg.est[length(reg.est)])
     reg.se=sqrt(loglikeli.var.AIC[[2]][1:(2*n_subject.cov+2*n_tooth.cov+2)])
@@ -463,8 +516,8 @@ CSDfit=function(Rawdata,n_subject.raw,n_within.raw,r,n_quad=30,lambda=0,Cauchy.p
     }
   }
   else{
-    par.est=.EMestcure(X,Z,Delta,n,ni,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen)
-    loglikeli.var.AIC=.AICcomputepenparacure(par.est,X,Z,Delta,blC,r,n,ni,myrules,lambda,Cauchy.pen)
+    par.est=.EMestcure(X,Z,Delta,n,ni,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen,clustering)
+    loglikeli.var.AIC=.AICcomputepenparacure(par.est,X,Z,Delta,blC,r,n,ni,myrules,lambda,Cauchy.pen,clustering)
     reg.est=par.est[1:(n_subject.cov+n_tooth.cov+2)]
     reg.est[length(reg.est)]=exp(reg.est[length(reg.est)])
     reg.se=sqrt(loglikeli.var.AIC[[2]])
@@ -496,6 +549,8 @@ CSDfit=function(Rawdata,n_subject.raw,n_within.raw,r,n_quad=30,lambda=0,Cauchy.p
     }
     
   }
+  
+
   output=list(parameter.est=resultmat,log_likelihood=loglikeli.var.AIC[[1]],AICvalue=loglikeli.var.AIC[[3]],
               coefs=round(exp(par.est[(n_subject.cov+n_tooth.cov+3):length(par.est)]),2))
   return(output)
@@ -505,7 +560,7 @@ CSDfit=function(Rawdata,n_subject.raw,n_within.raw,r,n_quad=30,lambda=0,Cauchy.p
 
 boot.CSD=function(Rawdata,n_subject.raw,n_within.raw,r,boot.rep,seed.begin,
                   n_quad=30,lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,
-                  knots.num=2,degree=2,scale.numr=TRUE,cure.reg=TRUE){
+                  knots.num=2,degree=2,scale.numr=TRUE,cure.reg=TRUE,clustering=TRUE){
   myrules=.ghrules(n_quad,normalized=FALSE)
   myrules=as.matrix(myrules[[n_quad]])
   n_tooth.cov=n_within.raw
@@ -569,11 +624,11 @@ boot.CSD=function(Rawdata,n_subject.raw,n_within.raw,r,boot.rep,seed.begin,
                                ,Boundary.knots = c(0,1),intercept = TRUE))
     }
     if(cure.reg){
-    par.est=.EMest(X,newZ,Delta,bootnum,mi,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen)
+    par.est=.EMest(X,newZ,Delta,bootnum,mi,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen,clustering)
     
     }
     else{
-      par.est=.EMestcure(X,newZ,Delta,bootnum,mi,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen)
+      par.est=.EMestcure(X,newZ,Delta,bootnum,mi,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen,clustering)
       par.est[1]=(1+exp(-par.est[1]))^(-1)
     }
     bootresult=rbind(bootresult,par.est)
@@ -620,7 +675,7 @@ boot.CSD=function(Rawdata,n_subject.raw,n_within.raw,r,boot.rep,seed.begin,
 
 
 Surv.CI=function(t,x,boot.par,Rawdata,n_subject,n_within,r,CI.lev=0.95,n_quad=30,knots.num=2,degree=2,
-                 lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,scale.numr=TRUE,cure.reg=TRUE){
+                 lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,scale.numr=TRUE,cure.reg=TRUE,clustering=TRUE){
   myrules=.ghrules(n_quad,normalized=FALSE)
   myrules=as.matrix(myrules[[n_quad]])
   if(scale.numr==TRUE){
@@ -654,7 +709,7 @@ Surv.CI=function(t,x,boot.par,Rawdata,n_subject,n_within,r,CI.lev=0.95,n_quad=30
   }
   for(l in 1:t.num){
     if(cure.reg){
-      par.est=.EMest(X,Z,Delta,n,ni,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen)
+      par.est=.EMest(X,Z,Delta,n,ni,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen,clustering)
       St=.Surv.est(t[l],x[l,],par.est[1:(2+2*n_subject.cov+2*n_tooth.cov)],
                    exp(par.est[(3+2*n_subject.cov+2*n_tooth.cov):length(par.est)]),Rawdata,n_subject,n_within,r,
                    n_quad,knots.num,degree,cure.reg = TRUE)
@@ -667,7 +722,7 @@ Surv.CI=function(t,x,boot.par,Rawdata,n_subject,n_within,r,CI.lev=0.95,n_quad=30
       }
     }
     else{
-      par.est=.EMestcure(X,Z,Delta,n,ni,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen)
+      par.est=.EMestcure(X,Z,Delta,n,ni,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen,clustering)
       St=.Surv.est(t[l],x[l,],c((1+exp(-par.est[1]))^(-1),par.est[2:(2+n_subject.cov+n_tooth.cov)]),
                    exp(par.est[(3+n_subject.cov+n_tooth.cov):length(par.est)]),Rawdata,n_subject,n_within,r,
                    n_quad,knots.num,degree,cure.reg = FALSE)
@@ -689,4 +744,47 @@ Surv.CI=function(t,x,boot.par,Rawdata,n_subject,n_within,r,CI.lev=0.95,n_quad=30
   colnames(result)[2]="CI_lower"
   colnames(result)[3]="CI_upper"
   return(result)
+}
+
+
+dignest.fun=function(Rawdata,n_subject.raw,n_within.raw,r,n_quad=30,lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,
+                     knots.num=2,degree=2,scale.numr=TRUE,cure.reg=TRUE,clustering=TRUE){
+  myrules=.ghrules(n_quad,normalized=FALSE)
+  myrules=as.matrix(myrules[[n_quad]])
+  if(scale.numr==TRUE){
+    Rawdata=.Datascale(Rawdata,n_subject.raw,n_within.raw)
+    n_tooth.cov=n_within.raw
+    n_subject.cov=n_subject.raw
+    totaldata=.Data.trans(Rawdata,n_subject.cov,n_tooth.cov)
+  }
+  else{
+    totaldata=.Data.trans(Rawdata,n_subject.raw,n_within.raw)
+    n_tooth.cov=n_within.raw
+    n_subject.cov=n_subject.raw
+  }
+  n=totaldata[[1]]
+  ni=totaldata[[2]]
+  C=totaldata[[3]]
+  Delta=totaldata[[4]]
+  X=totaldata[[5]]
+  Z=totaldata[[6]]
+  minCSTime=min(Rawdata[,2])
+  maxCSTime=max(Rawdata[,2])
+  blC <- list()
+  length(blC) <- n
+  knots <- seq(0,1  , length.out = (knots.num + 2))
+  knots=knots[3:length(knots)-1]
+  
+  for (i in 1:n) {
+    blC[[i]]=t(splines2::ibs((C[[i]]-(minCSTime-0.1))/(maxCSTime-minCSTime+0.2),knots = knots,degree=degree
+                             ,Boundary.knots = c(0,1),intercept = TRUE))
+  }
+  
+  par.est=.EMest(X,Z,Delta,n,ni,C,r,n_quad,lambda,tolerance,blC,myrules,Cauchy.pen,clustering)
+  directresult=optim(par=par.est,fn=testquadrature1,rules=myrules,Delta=Delta,X=X,Z=Z,n=n,ni=ni,
+                     r=r,blC=blC,betadim=n_within.raw,gammadim=n_subject.raw,weight=rep(1,n),hessian = 1)
+  Deltamatrix=.jacob_weight(rep(1,n),par.est,myrules,Delta,X,Z,n,ni,r,blC,betadim=n_within.raw,gammadim=n_subject.raw)
+  Mmatrix=t(Deltamatrix)%*%solve(directresult$hessian)%*%Deltamatrix
+  return(Mmatrix)
+  
 }

@@ -8,9 +8,9 @@ For the purpose of the confidence band calculation, here we estimate the paramet
 }
 
 \usage{
-boot.CSD(Rawdata,n_subject.raw,n_within.raw,r,boot.rep,seed.begin,
-                         n_quad=30,lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,
-                         knots.num=2,degree=2,scale.numr=TRUE, cure.reg = TRUE)
+  boot.CSD(Rawdata,n_subject.raw,n_within.raw,r,boot.rep,seed.begin,
+                  n_quad=30,lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,
+                  knots.num=2,degree=2,scale.numr=TRUE,cure.reg=TRUE,clustering=TRUE)
 }
 \arguments{
 
@@ -47,7 +47,9 @@ just set different seed.begin for each nodes, then combine the results.}
 
 \item{scale.numr}{logical. If TRUE, then all numeric covariates (cluster specifie and within cluster) are scaled with mean zero and standard deviation one. The default value is TRUE.}
 \item{cure.reg}{logical. TRUE and FALSE indicate modelling the cure rate part with covariates (including cluster and within cluster covariates) or not, respectively. The default value is TRUE.}
-
+   \item{clustering}{
+   logical. TRUE and FALSE indicate assume there is clustering effect or not, respectively. The default value is TRUE.
+   }
 }
 \value{
 boot.CSD returns a dataframe, each row contains one parameter estimate based on one bootstrap sample.

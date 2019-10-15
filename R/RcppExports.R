@@ -89,3 +89,15 @@ loglikelihoodtestcure <- function(parameters, b, Delta, X, Z, ni, r, blC, betadi
     .Call(`_CRFCSD_loglikelihoodtestcure`, parameters, b, Delta, X, Z, ni, r, blC, betadim, gammadim)
 }
 
+likelihoodfunc1 <- function(b, parameters, Delta, X, Z, ni, r, blC, betadim, gammadim) {
+    .Call(`_CRFCSD_likelihoodfunc1`, b, parameters, Delta, X, Z, ni, r, blC, betadim, gammadim)
+}
+
+testquadrature1 <- function(parameters, rules, Delta, X, Z, n, ni, r, blC, betadim, gammadim, weight) {
+    .Call(`_CRFCSD_testquadrature1`, parameters, rules, Delta, X, Z, n, ni, r, blC, betadim, gammadim, weight)
+}
+
+Maxeigen <- function(B) {
+    .Call(`_CRFCSD_Maxeigen`, B)
+}
+

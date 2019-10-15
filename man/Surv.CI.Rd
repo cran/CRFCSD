@@ -9,7 +9,7 @@ Surv.CI can predicate the survival probability and the corresponding confidence 
 \usage{
 Surv.CI(t,x,boot.par,Rawdata,n_subject,n_within,r,
 CI.lev=0.95,n_quad=30,knots.num=2,degree=2,
-lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,scale.numr=TRUE,cure.reg=TRUE)
+lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,scale.numr=TRUE,cure.reg=TRUE,clustering=TRUE)
 }
 \arguments{
   \item{t}{The given set of time points. All time points should be between the minimum and maximum of the inspection time.}
@@ -46,7 +46,9 @@ Here r=0 and 1 imply the proportional hazard and the proportional odds model, re
 \item{scale.numr}{logical. If TRUE, then all numeric covariates (cluster specifie and within cluster) are scaled with mean zero and standard deviation one. The default value is TRUE.}
 
 \item{cure.reg}{logical. TRUE and FALSE indicate modelling the cure rate part with covariates (including cluster and within cluster covariates) or not, respectively. The default value is TRUE.}
-
+   \item{clustering}{
+   logical. TRUE and FALSE indicate assume there is clustering effect or not, respectively. The default value is TRUE.
+   }
 }
 
 \value{

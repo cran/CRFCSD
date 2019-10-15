@@ -1,14 +1,15 @@
-\name{CSDfit}
-\alias{CSDfit}
+\name{dignest.fun}
+\alias{dignest.fun}
 \title{
-Analysing clustered current status data}
+Diagnosing sensitive observations}
 \description{
-CSDfit is used to analyze clustered current status data. The function provides parameter estimates, the maximum log likelihood value and the corresponding AIC value.
+dignest.fun is used to detect if there is local sensitivity and diagnosed which observations are sensitive.
 }
 \usage{
-CSDfit(Rawdata, n_subject.raw, n_within.raw, r, n_quad = 30,
-  lambda = 0, Cauchy.pen = TRUE, tolerance = 0.01, knots.num = 2,
-  degree = 2, scale.numr = TRUE, cure.reg = TRUE,clustering=TRUE)
+dignest.fun(Rawdata,n_subject.raw,n_within.raw,r,n_quad=30,
+lambda=0,Cauchy.pen=TRUE,tolerance=1e-2,
+                     knots.num=2,degree=2,
+                     scale.numr=TRUE,cure.reg=TRUE,clustering=TRUE)
 
 }
 \arguments{
@@ -56,5 +57,5 @@ Function CSDfit returns a list containing the following components:
 
 \examples{
 data(PD)
-PDfit=CSDfit(PD,3,1,0,n_quad=10)
+dignest.resut=dignest.fun(PD,3,1,0,n_quad=5)
 }
