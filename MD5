@@ -1,8 +1,8 @@
-fcf013a193caefc78162f53ad202a407 *DESCRIPTION
-1c3352bbb08e529f0773157826d61e5c *NAMESPACE
+dfe996761a22a44089d84c433ea834a7 *DESCRIPTION
+96ca890187ac6c3c263bf32e94922f0d *NAMESPACE
 91ede6a22518487de9f801d1a982e236 *R/RcppExports.R
-238c04c2a0cb44349e3bbec5b7b17cf7 *R/formal_R.R
-2c6da1d6e1c524a79cd3235b138ec726 *build/partial.rdb
+816c1e8f195890f8702dadcb30caddcc *R/formal_R.R
+de6df57b590063c404c40a13d2722139 *build/partial.rdb
 485642ad879547d40a6ce754aa5a565c *data/PD.RData
 5f82be46d73c2141b2712cbcbf51052c *data/boot.result.RData
 03900651e9bff1a465f8fa895f5f3946 *man/CRFCSD-package.Rd
@@ -11,7 +11,6 @@ c8c314a5030aa8f333d43ff428b5a328 *man/CSDfit.Rd
 5e43c2d8243396586615ad4e9204d4d5 *man/Surv.CI.Rd
 fb866c48f75e0a911ee9ad74d0769897 *man/boot.CSD.Rd
 23ba0442d18d593cf5925a54e7a2ee59 *man/boot.result.Rd
-df3f9cfaa8bb675e847edde46fcf7444 *man/dignest.fun.Rd
 61059660eb073d93e00e8ee054237071 *src/Makevars
 61059660eb073d93e00e8ee054237071 *src/Makevars.win
 fdd5b2d31f576b14c404a35aaf8ff62e *src/RcppExports.cpp
