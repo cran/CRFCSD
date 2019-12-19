@@ -12,8 +12,8 @@ using namespace arma;
 arma::vec firstderiv_i(const arma::vec&parameters,const double&b,const arma::vec&Delta,
                        const arma::mat&X,const arma::vec&Z,const int&ni,const double&r,const arma::mat&blC,
                        const int&betadim,const int&gammadim){
-  arma::vec result(parameters.n_elem);
-  arma::vec covariate(betadim+gammadim);
+    arma::vec result=parameters;
+  arma::vec covariate=parameters.subvec(betadim+gammadim+1,betadim+gammadim+betadim+gammadim);
   double eta0=parameters(0);
   arma::vec eta1=parameters.subvec(1,betadim);
   arma::vec eta2=parameters.subvec(1+betadim,betadim+gammadim);
@@ -21,14 +21,17 @@ arma::vec firstderiv_i(const arma::vec&parameters,const double&b,const arma::vec
   arma::vec gamma=parameters.subvec(betadim+gammadim+1+betadim,betadim+gammadim+betadim+gammadim);
   double theta=parameters(betadim+gammadim+betadim+gammadim+1);
   arma::vec psi=parameters.subvec(betadim+gammadim+betadim+gammadim+2,parameters.n_elem-1);
-  arma::vec onesvector;
-  arma::vec pi,si,expterm,Ht;
-  onesvector.ones(ni);
+  arma::vec onesvector=ones(ni);
+  arma::vec si=zeros(ni);
+  arma::vec expterm=zeros(ni);
+  arma::vec Ht=zeros(ni);
   arma::vec exppilinear=exp(-onesvector*eta0-X*eta1-sum(Z%eta2)*onesvector);
+  arma::vec pi=zeros(exppilinear.n_elem);
+  
   pi=pow(1+exppilinear,-1);
   expterm=exp(X*beta+sum(Z%gamma)*onesvector+std::exp(theta)*b*onesvector);
   Ht=trans(blC)*exp(psi);
-  arma::vec pisi;
+  arma::vec pisi=zeros(ni);
   
   if(r>0){
     si=pow(1+r*Ht%expterm,-1/r);
@@ -37,8 +40,8 @@ arma::vec firstderiv_i(const arma::vec&parameters,const double&b,const arma::vec
     si=exp(-Ht%expterm);
   }
   pisi=pi+(onesvector-pi)%si;
-
-  arma::vec piderivpart1,piderivpart2;
+  arma::vec piderivpart1=zeros(ni);
+  arma::vec piderivpart2=zeros(ni);
   piderivpart1=pow(1+exppilinear,-2)%exppilinear;
   arma::vec commonvec=Delta%pow(1-pi,-1)%(-piderivpart1)+(1-Delta)%pow(pi+(1-pi)%si,-1)%(1-si)%piderivpart1;
   result(0)=sum(commonvec);
@@ -46,7 +49,7 @@ arma::vec firstderiv_i(const arma::vec&parameters,const double&b,const arma::vec
     result.subvec(1,betadim)=result.subvec(1,betadim)+trans(X.row(j))*commonvec(j);
     result.subvec(1+betadim,betadim+gammadim)=result.subvec(1+betadim,betadim+gammadim)+Z*commonvec(j);
   }
-  arma::vec derivsi;
+  arma::vec derivsi=zeros(ni);
   if(r>0){
     derivsi=-pow(1+r*Ht%expterm,-1/r-1)%Ht%expterm;
   }
@@ -61,7 +64,8 @@ arma::vec firstderiv_i(const arma::vec&parameters,const double&b,const arma::vec
       +Z*commonvec2(j);
     result(betadim+gammadim+betadim+gammadim+1)=sum(commonvec2*b*exp(theta));
   }
-  arma::vec commonvec3,sipsideriv;
+  arma::vec commonvec3=zeros(ni);
+  arma::vec sipsideriv=zeros(ni);
   if(r>0){
     sipsideriv=-pow(1+r*Ht%expterm,-1/r-1)%expterm;
   }
@@ -88,9 +92,8 @@ double g0b(const double&b,const arma::vec&beta,const arma::vec&gamma,const arma:
   arma::vec pilinear=eta0+X*eta1+sum(trans(eta2)*Z);
   
   arma::vec pi=pow((1+exp(-pilinear)),-1);
-  arma::vec S;
   arma::vec Slinear=X*beta+sum(trans(gamma)*Z)+std::exp(theta)*b;
-  
+  arma::vec S=zeros(Slinear.n_elem);
   arma::vec H_t=trans(blC)*exp(psi);
   if(r==0){
     S=exp(-H_t%exp(Slinear));
@@ -113,7 +116,7 @@ arma::mat g0bmat(const arma::mat&rules,const arma::vec&beta,const arma::vec&gamm
                  const arma::mat&Z,const arma::vec&psi,const arma::field<arma::mat>&blC,
                  const double&r){
   int order=rules.n_rows;
-  arma::mat result(order,n);
+  arma::mat result=zeros(order,n);
   for(int q=0;q<order;q++){
     for(int i=0;i<n;i++){
       result(q,i)=g0b(rules(q,0),beta,gamma,eta,theta,betadim,gammadim,Delta(i),X(i),trans(Z.row(i)),psi,blC(i),r,ni(i));
@@ -133,9 +136,9 @@ arma::vec NormalConstant(const arma::mat&rules,const arma::vec&beta,const arma::
                          const arma::field<arma::mat>&X,
                          const arma::mat&Z,const arma::vec&psi,const arma::field<arma::mat>&blC,
                          const double&r){
-  arma::vec result(n);
+  arma::vec result=zeros(n);
   int order=rules.n_rows;
-  arma::vec functionvalue(order);
+  arma::vec functionvalue=zeros(order);
   for(int i=0;i<n;i++){
     for(int k=0;k<order;k++){
       functionvalue(k)=g0b(rules(k,0),beta,gamma,eta,theta,betadim,gammadim,Delta(i),X(i),trans(Z.row(i)),psi,blC(i),r,ni(i));
@@ -157,8 +160,9 @@ arma::vec ui(const double&b,const arma::vec&beta,const arma::vec&gamma,const arm
   arma::vec eta2=eta.subvec(betadim+1,betadim+gammadim);
   arma::vec pilinear=eta0+X*eta1+sum(trans(eta2)*Z);
   arma::vec pi=pow((1+exp(-pilinear)),-1);
-  arma::vec S;
+  
   arma::vec Slinear=X*beta+sum(trans(gamma)*Z)+std::exp(theta)*b;
+  arma::vec S=zeros(Slinear.n_elem);
   arma::vec H_t=trans(blC)*exp(psi);
   if(r==0){
     S=exp(-H_t%exp(Slinear));
@@ -166,7 +170,7 @@ arma::vec ui(const double&b,const arma::vec&beta,const arma::vec&gamma,const arm
   else{
     S=pow(1+r*H_t%exp(Slinear),-1/r);
   }
-  arma::vec result;
+  arma::vec result=zeros(pi.n_elem);
   result=(1-Delta)%pi%pow(pi+(1-pi)%S,-1);
   return result;
 }
@@ -202,8 +206,7 @@ double Q1(const arma::vec&parameters,const arma::mat&rules,const arma::vec&beta,
   double esteta0=parameters(0);
   arma::vec esteta1=parameters.subvec(1,betadim);
   arma::vec esteta2=parameters.subvec(betadim+1,betadim+gammadim);
-  arma::vec pilinear;
-  arma::vec pi;
+  
   for(int i=0;i<n;i++){
     
     uij(i).zeros(ni(i));
@@ -211,6 +214,9 @@ double Q1(const arma::vec&parameters,const arma::mat&rules,const arma::vec&beta,
   }
   double result=0;
   for(int i=0;i<n;i++){
+    arma::vec pi=zeros(ni(i));
+    arma::vec pilinear=zeros(ni(i));
+    
     pilinear=esteta0+X(i)*esteta1+sum(trans(esteta2)*trans(Z.row(i)));
     pi=pow((1+exp(-pilinear)),-1);
     result=result+sum(uij(i)%log(pi)+(1-uij(i))%log(1-pi));
@@ -245,9 +251,11 @@ double Q2(const arma::vec&parameters,const arma::mat&rules,const arma::vec&beta,
   arma::vec H_t;
   int order=rules.n_rows;
   for(int i=0;i<n;i++){
+    arma::vec H_t=zeros(ni(i));
     Smat(i).zeros(ni(i),order);
     H_t=trans(blC(i))*exp(estpsi);
     for(int q=0;q<order;q++){
+      arma::vec Slinear=zeros(ni(i));
       Slinear=X(i)*estbeta+sum(trans(estgamma)*trans(Z.row(i)))+std::exp(esttheta)*rules(q,0);
       if(r==0){
         Smat(i).col(q)=exp(-H_t%exp(Slinear));
@@ -277,10 +285,9 @@ double Q2(const arma::vec&parameters,const arma::mat&rules,const arma::vec&beta,
   for(int i=0;i<n;i++){
     part2=part2+sum((1-Delta(i))%((1-uijqmat(i))%log(Smat(i))*(g0bvalue.col(i)%rules.col(1))))/normalconstant(i);
   }
-  double result;
+  double result=0;
   arma::vec parametersquare=pow(parameters.subvec(0,betadim+gammadim),2);
-  arma::mat penalty;
-  penalty=trans(estpsi)*R*estpsi;
+  arma::mat penalty=trans(estpsi)*R*estpsi;
   if(Cauchyindex){
     result=part1+part2-sum(log(1+parametersquare/6.25))-tunepar*penalty(0,0);
   }
@@ -303,11 +310,13 @@ double likelihoodfunc_i(const double&b,const arma::vec&parameters,
                        const int&ni,const double&r,const arma::mat&blC,const int&betadim,const int&gammadim){
   int totaldim=parameters.n_elem;
   int zetadim=betadim+gammadim+1;
-  double result=0;double S;arma::mat midresult;midresult.zeros(1,1);
-  arma::vec covariate(betadim+gammadim);
+  double result=0;
+  double S=0;
+  arma::mat midresult=zeros(1,1);
+  arma::vec covariate=zeros(betadim+gammadim);
   
   
-  double uncurerate;
+  double uncurerate=0;
   for(int j=0;j<ni;j++){
     covariate.subvec(0,betadim-1)=trans(X.row(j));
     covariate.subvec(betadim,betadim+gammadim-1)=Z;
@@ -357,8 +366,8 @@ double Loglikelihood(const arma::vec&parameters,const arma::mat&rules,const arma
                        const double&tunepar,const arma::mat&R,const bool&Cauchyindex){
   int zetadim=betadim+gammadim+1;
   int order=rules.n_rows;double result=0;
-  arma::vec weightvec;weightvec=rules.col(1);double term1;
-  arma::vec functionvalue(order);
+  arma::vec weightvec=rules.col(1);double term1=0;
+  arma::vec functionvalue=zeros(order);
   arma::vec estpsi=parameters.subvec(zetadim+betadim+gammadim+1,parameters.n_elem-1);
   for(int i=0;i<n;i++){
     
@@ -373,8 +382,7 @@ double Loglikelihood(const arma::vec&parameters,const arma::mat&rules,const arma
     result=result+std::log(term1);
     
   }
-  arma::mat penalty;
-  penalty=trans(estpsi)*R*estpsi;
+  arma::mat penalty=trans(estpsi)*R*estpsi;
   arma::vec parametersquare=pow(parameters.subvec(0,zetadim+betadim+gammadim),2);
   if(Cauchyindex){
     result=result-sum(log(1+parametersquare/6.25))-tunepar*penalty(0,0);
@@ -392,13 +400,13 @@ double loglikelihoodtest(const arma::vec&parameters,const double&b,
                          const int&ni,const double&r,const arma::mat&blC,const int&betadim,const int&gammadim){
   int totaldim=parameters.n_elem;
   int zetadim=betadim+gammadim+1;
-  double result=0;double S;arma::mat midresult;midresult.zeros(1,1);
-  arma::vec covariate(betadim+gammadim);
-  arma::vec facvec(8);facvec(0)=1;
-  arma::vec inverfac(8);inverfac(0)=1;
+  double result=0;double S=0;arma::mat midresult=zeros(1,1);
+  arma::vec covariate=zeros(betadim+gammadim);
+  arma::vec facvec=zeros(8);facvec(0)=1;
+  arma::vec inverfac=zeros(8);inverfac(0)=1;
   
   
-  double uncurerate;
+  double uncurerate=0;
   for(int j=0;j<ni;j++){
     covariate.subvec(0,betadim-1)=trans(X.row(j));
     covariate.subvec(betadim,betadim+gammadim-1)=Z;
@@ -434,17 +442,15 @@ double loglikelihoodtest(const arma::vec&parameters,const double&b,
 // [[Rcpp::export]]
 double logcauchy(const arma::vec&parameters){
   arma::vec parametersquare=pow(parameters.subvec(0,9),2);
-  double result;
+  double result=0;
   result=-sum(log(1+parametersquare/6.25));
   return result;
 }
 
 // [[Rcpp::export]]
 double penaltyterm(const arma::vec&psi,const double&lambda,const arma::mat&R){
-  arma::mat penalty;
-  penalty=exp(trans(psi))*R*exp(psi);
-  double result;
-  result=lambda*penalty(0,0);
+  arma::mat penalty=exp(trans(psi))*R*exp(psi);
+  double result=lambda*penalty(0,0);
   return(result);
 }
 
@@ -454,21 +460,23 @@ double penaltyterm(const arma::vec&psi,const double&lambda,const arma::mat&R){
 arma::vec firstderiv_icure(const arma::vec&parameters,const double&b,const arma::vec&Delta,
                            const arma::mat&X,const arma::vec&Z,const int&ni,const double&r,const arma::mat&blC,
                            const int&betadim,const int&gammadim){
-  arma::vec result(parameters.n_elem);
-  arma::vec covariate(betadim+gammadim);
+  arma::vec result=zeros(parameters.n_elem);
+  arma::vec covariate=zeros(betadim+gammadim);
   double eta0=parameters(0);
   arma::vec beta=parameters.subvec(1,betadim);
   arma::vec gamma=parameters.subvec(1+betadim,betadim+gammadim);
   double theta=parameters(betadim+gammadim+1);
   arma::vec psi=parameters.subvec(betadim+gammadim+2,parameters.n_elem-1);
-  arma::vec onesvector;
-  arma::vec pi,si,expterm,Ht;
-  onesvector.ones(ni);
+  arma::vec onesvector=ones(ni);
+  arma::vec pi=zeros(ni);
+  arma::vec si=zeros(ni);
+  arma::vec expterm=zeros(ni);
+  arma::vec Ht=zeros(ni);
   arma::vec exppilinear=exp(-onesvector*eta0);
   pi=pow(1+exppilinear,-1);
   expterm=exp(X*beta+sum(Z%gamma)*onesvector+std::exp(theta)*b*onesvector);
   Ht=trans(blC)*exp(psi);
-  arma::vec pisi;
+  arma::vec pisi=zeros(ni);
   
   if(r>0){
     si=pow(1+r*Ht%expterm,-1/r);
@@ -477,11 +485,12 @@ arma::vec firstderiv_icure(const arma::vec&parameters,const double&b,const arma:
     si=exp(-Ht%expterm);
   }
   pisi=pi+(onesvector-pi)%si;
-  arma::vec piderivpart1,piderivpart2;
+  arma::vec piderivpart1=zeros(ni);
+  arma::vec piderivpart2=zeros(ni);
   piderivpart1=pow(1+exppilinear,-2)%exppilinear;
   arma::vec commonvec=Delta%pow(1-pi,-1)%(-piderivpart1)+(1-Delta)%pow(pi+(1-pi)%si,-1)%(1-si)%piderivpart1;
   result(0)=sum(commonvec);
-  arma::vec derivsi;
+  arma::vec derivsi=zeros(ni);
   if(r>0){
     derivsi=-pow(1+r*Ht%expterm,-1/r-1)%Ht%expterm;
   }
@@ -496,7 +505,8 @@ arma::vec firstderiv_icure(const arma::vec&parameters,const double&b,const arma:
       +Z*commonvec2(j);
     result(betadim+gammadim+1)=sum(commonvec2*b*exp(theta));
   }
-  arma::vec commonvec3,sipsideriv;
+  arma::vec commonvec3=zeros(ni);
+  arma::vec sipsideriv=zeros(ni);
   if(r>0){
     sipsideriv=-pow(1+r*Ht%expterm,-1/r-1)%expterm;
   }
@@ -519,14 +529,12 @@ double g0bcure(const double&b,const arma::vec&beta,const arma::vec&gamma,const d
                const arma::mat&X,const arma::vec&Z,
                const arma::vec&psi,const arma::mat&blC,const double&r,const int&ni){
   
-  arma::vec onevector;
-  onevector.ones(ni);
+  arma::vec onevector=ones(ni);
   arma::vec pilinear=eta0*onevector;
   
   arma::vec pi=pow((1+exp(-pilinear)),-1);
-  arma::vec S;
   arma::vec Slinear=X*beta+sum(trans(gamma)*Z)+std::exp(theta)*b;
-  
+  arma::vec S=zeros(Slinear.n_elem);
   arma::vec H_t=trans(blC)*exp(psi);
   if(r==0){
     S=exp(-H_t%exp(Slinear));
@@ -549,7 +557,7 @@ arma::mat g0bmatcure(const arma::mat&rules,const arma::vec&beta,const arma::vec&
                      const arma::mat&Z,const arma::vec&psi,const arma::field<arma::mat>&blC,
                      const double&r){
   int order=rules.n_rows;
-  arma::mat result(order,n);
+  arma::mat result=zeros(order,n);
   for(int q=0;q<order;q++){
     for(int i=0;i<n;i++){
       result(q,i)=g0bcure(rules(q,0),beta,gamma,eta0,theta,betadim,gammadim,Delta(i),X(i),trans(Z.row(i)),psi,blC(i),r,ni(i));
@@ -569,9 +577,9 @@ arma::vec NormalConstantcure(const arma::mat&rules,const arma::vec&beta,const ar
                              const arma::field<arma::mat>&X,
                              const arma::mat&Z,const arma::vec&psi,const arma::field<arma::mat>&blC,
                              const double&r){
-  arma::vec result(n);
+  arma::vec result=zeros(n);
   int order=rules.n_rows;
-  arma::vec functionvalue(order);
+  arma::vec functionvalue=zeros(order);
   for(int i=0;i<n;i++){
     for(int k=0;k<order;k++){
       functionvalue(k)=g0bcure(rules(k,0),beta,gamma,eta0,theta,betadim,gammadim,Delta(i),X(i),trans(Z.row(i)),psi,blC(i),r,ni(i));
@@ -589,12 +597,12 @@ arma::vec uicure(const double&b,const arma::vec&beta,const arma::vec&gamma,const
                  const arma::mat&X,const arma::vec&Z,
                  const arma::vec&psi,const arma::mat&blC,const double&r,const int&ni){
   
-  arma::vec onevector;
-  onevector.ones(ni);
+  arma::vec onevector=ones(ni);
   arma::vec pilinear=eta0*onevector;
   arma::vec pi=pow((1+exp(-pilinear)),-1);
-  arma::vec S;
+  
   arma::vec Slinear=X*beta+sum(trans(gamma)*Z)+std::exp(theta)*b;
+  arma::vec S=zeros(Slinear.n_elem);
   arma::vec H_t=trans(blC)*exp(psi);
   if(r==0){
     S=exp(-H_t%exp(Slinear));
@@ -602,7 +610,7 @@ arma::vec uicure(const double&b,const arma::vec&beta,const arma::vec&gamma,const
   else{
     S=pow(1+r*H_t%exp(Slinear),-1/r);
   }
-  arma::vec result;
+  arma::vec result=zeros(ni);
   result=(1-Delta)%pi%pow(pi+(1-pi)%S,-1);
   return result;
 }
@@ -636,9 +644,6 @@ double Q1cure(const double&parameters,const arma::mat&rules,const arma::vec&beta
               const arma::field<arma::mat>&uijqmat,const bool&Cauchyindex){
   arma::field<arma::vec> uij(n);
   
-  arma::vec pilinear;
-  arma::vec pi;
-  arma::vec onevector;
   for(int i=0;i<n;i++){
     
     uij(i).zeros(ni(i));
@@ -646,9 +651,10 @@ double Q1cure(const double&parameters,const arma::mat&rules,const arma::vec&beta
   }
   double result=0;
   for(int i=0;i<n;i++){
-    onevector.ones(ni(i));
-    pilinear=parameters*onevector;
-    pi=pow((1+exp(-pilinear)),-1);
+    arma::vec onevector=ones(ni(i));
+    
+    arma::vec pilinear=parameters*onevector;
+    arma::vec pi=pow((1+exp(-pilinear)),-1);
     result=result+sum(uij(i)%log(pi)+(1-uij(i))%log(1-pi));
   }
   if(Cauchyindex){
@@ -671,12 +677,13 @@ double Q2cure(const arma::vec&parameters,const arma::mat&rules,const arma::vec&b
   arma::vec estpsi=parameters.subvec(betadim+gammadim+1,parameters.n_elem-1);
   arma::field<arma::mat> Smat(n);
   arma::vec Slinear;
-  arma::vec H_t;
   int order=rules.n_rows;
   for(int i=0;i<n;i++){
+    arma::vec H_t=zeros(ni(i));
     Smat(i).zeros(ni(i),order);
     H_t=trans(blC(i))*exp(estpsi);
     for(int q=0;q<order;q++){
+      arma::vec Slinear=zeros(ni(i));
       Slinear=X(i)*estbeta+sum(trans(estgamma)*trans(Z.row(i)))+std::exp(esttheta)*rules(q,0);
       if(r==0){
         Smat(i).col(q)=exp(-H_t%exp(Slinear));
@@ -706,10 +713,9 @@ double Q2cure(const arma::vec&parameters,const arma::mat&rules,const arma::vec&b
   for(int i=0;i<n;i++){
     part2=part2+sum((1-Delta(i))%((1-uijqmat(i))%log(Smat(i))*(g0bvalue.col(i)%rules.col(1))))/normalconstant(i);
   }
-  double result;
+  double result=0;
   arma::vec parametersquare=pow(parameters.subvec(0,betadim+gammadim),2);
-  arma::mat penalty;
-  penalty=trans(estpsi)*R*estpsi;
+  arma::mat penalty=trans(estpsi)*R*estpsi;
   if(Cauchyindex){
     result=part1+part2-sum(log(1+parametersquare/6.25))-tunepar*penalty(0,0);
   }
@@ -731,11 +737,14 @@ double likelihoodfunccure(const double&b,const arma::vec&parameters,
                           const int&ni,const double&r,const arma::mat&blC,const int&betadim,const int&gammadim){
   int totaldim=parameters.n_elem;
   int zetadim=1;
-  double result=0;double S;arma::mat midresult;midresult.zeros(1,1);
+  double result=0;
+  
+  double S=0;
+  arma::mat midresult=zeros(1,1);
   arma::vec covariate(betadim+gammadim);
   
   
-  double uncurerate;
+  double uncurerate=0;
   for(int j=0;j<ni;j++){
     covariate.subvec(0,betadim-1)=trans(X.row(j));
     covariate.subvec(betadim,betadim+gammadim-1)=Z;
@@ -785,8 +794,8 @@ double Loglikelihoodcure(const arma::vec&parameters,const arma::mat&rules,const 
                          const double&tunepar,const arma::mat&R,const bool&Cauchyindex){
   int zetadim=1;
   int order=rules.n_rows;double result=0;
-  arma::vec weightvec;weightvec=rules.col(1);double term1;
-  arma::vec functionvalue(order);
+  arma::vec weightvec;weightvec=rules.col(1);double term1=0;
+  arma::vec functionvalue=zeros(order);
   arma::vec estpsi=parameters.subvec(zetadim+betadim+gammadim+1,parameters.n_elem-1);
   for(int i=0;i<n;i++){
     
@@ -800,8 +809,7 @@ double Loglikelihoodcure(const arma::vec&parameters,const arma::mat&rules,const 
     result=result+std::log(term1);
     
   }
-  arma::mat penalty;
-  penalty=trans(estpsi)*R*estpsi;
+  arma::mat penalty=trans(estpsi)*R*estpsi;
   arma::vec parametersquare=pow(parameters.subvec(0,zetadim+betadim+gammadim),2);
   if(Cauchyindex){
     result=result-sum(log(1+parametersquare/6.25))-tunepar*penalty(0,0);
@@ -825,13 +833,15 @@ double loglikelihoodtestcure(const arma::vec&parameters,const double&b,
                              const int&ni,const double&r,const arma::mat&blC,const int&betadim,const int&gammadim){
   int totaldim=parameters.n_elem;
   int zetadim=1;
-  double result=0;double S;arma::mat midresult;midresult.zeros(1,1);
-  arma::vec covariate(betadim+gammadim);
-  arma::vec facvec(8);facvec(0)=1;
-  arma::vec inverfac(8);inverfac(0)=1;
+  double result=0;
+  double S=0;
+  arma::mat midresult=zeros(1,1);
+  arma::vec covariate=zeros(betadim+gammadim);
+  arma::vec facvec=zeros(8);facvec(0)=1;
+  arma::vec inverfac=zeros(8);inverfac(0)=1;
   
   
-  double uncurerate;
+  double uncurerate=0;
   for(int j=0;j<ni;j++){
     covariate.subvec(0,betadim-1)=trans(X.row(j));
     covariate.subvec(betadim,betadim+gammadim-1)=Z;
@@ -870,12 +880,15 @@ double likelihoodfunc1(const double&b,const arma::vec&parameters,
                        const int&ni,const double&r,const arma::mat&blC,const int&betadim,const int&gammadim){
   int totaldim=parameters.n_elem;
   int zetadim=betadim+gammadim+1;
-  double result=0;double S,lambda;arma::mat midresult;midresult.zeros(1,1);
+  double result=0;
+  double S=0;
+  double lambda=0;
+  arma::mat midresult=zeros(1,1);
   double tracprobability=0;
-  arma::vec covariate(betadim+gammadim);
+  arma::vec covariate=zeros(betadim+gammadim);
   
   
-  double uncurerate;
+  double uncurerate=0;
   for(int j=0;j<ni;j++){
     covariate.subvec(0,betadim-1)=trans(X.row(j));
     covariate.subvec(betadim,betadim+gammadim-1)=Z;
@@ -920,8 +933,9 @@ double testquadrature1(const arma::vec&parameters,const arma::mat&rules,const ar
   int zetadim=betadim+gammadim+1;
   int totaldim=parameters.n_elem;
   int order=rules.n_rows;double result=0;
-  arma::vec weightvec;weightvec=rules.col(1);double term1;
-  arma::vec functionvalue(order);
+  arma::vec weightvec=rules.col(1);
+  double term1=0;
+  arma::vec functionvalue=zeros(order);
   for(int i=0;i<n;i++){
     
     for(int k=0;k<order;k++){
@@ -942,14 +956,4 @@ double testquadrature1(const arma::vec&parameters,const arma::mat&rules,const ar
 
 
 
-// [[Rcpp::export]]
-arma::field<arma::mat> Maxeigen(const arma::mat&B){
-  arma::vec eigval;
-  arma::mat eigvec;
-  arma::field<arma::mat> result(2);
-  arma::eig_sym(eigval,eigvec,B);
-  result(0)=eigval;
-  result(1)=eigvec;
-  return result;
-}
 

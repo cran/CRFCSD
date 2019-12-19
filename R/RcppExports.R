@@ -97,7 +97,3 @@ testquadrature1 <- function(parameters, rules, Delta, X, Z, n, ni, r, blC, betad
     .Call(`_CRFCSD_testquadrature1`, parameters, rules, Delta, X, Z, n, ni, r, blC, betadim, gammadim, weight)
 }
 
-Maxeigen <- function(B) {
-    .Call(`_CRFCSD_Maxeigen`, B)
-}
-

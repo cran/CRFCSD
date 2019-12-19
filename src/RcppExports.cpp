@@ -562,17 +562,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// Maxeigen
-arma::field<arma::mat> Maxeigen(const arma::mat& B);
-RcppExport SEXP _CRFCSD_Maxeigen(SEXP BSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type B(BSEXP);
-    rcpp_result_gen = Rcpp::wrap(Maxeigen(B));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_CRFCSD_firstderiv_i", (DL_FUNC) &_CRFCSD_firstderiv_i, 10},
@@ -599,7 +588,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CRFCSD_loglikelihoodtestcure", (DL_FUNC) &_CRFCSD_loglikelihoodtestcure, 10},
     {"_CRFCSD_likelihoodfunc1", (DL_FUNC) &_CRFCSD_likelihoodfunc1, 10},
     {"_CRFCSD_testquadrature1", (DL_FUNC) &_CRFCSD_testquadrature1, 12},
-    {"_CRFCSD_Maxeigen", (DL_FUNC) &_CRFCSD_Maxeigen, 1},
     {NULL, NULL, 0}
 };
 

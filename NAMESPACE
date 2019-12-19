@@ -1,4 +1,4 @@
 useDynLib(CRFCSD, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
 importFrom("stats", "dnorm", "optim", "pnorm", "quantile")
-export("CSDfit","boot.CSD","Surv.CI")
+export("CSDfit","boot.CSD","Surv.CI"  )
